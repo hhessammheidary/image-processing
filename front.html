@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Upload</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 50px;
+        text-align: center;
+        background-color: #f7f7f7;
+    }
+    h1 {
+        color: #333;
+    }
+    #drop_zone {
+        border: 2px dashed #ccc;
+        width: 300px;
+        height: 200px;
+        padding: 20px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 10px;
+    }
+    #drop_zone img {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    #result {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+    }
+    #response_text {
+        margin-top: 20px;
+        width: 300px;
+        height: 100px;
+        resize: none;
+    }
+</style>
+</head>
+<body>
+    <h1>Image Upload</h1>
+    <div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+        <p>Drag & Drop Image Here</p>
+    </div>
+    <button onclick="uploadImage()">Send Image</button>
+    <div id="result"></div>
+    <textarea id="response_text" placeholder="Response from server"></textarea>
+
+    <script>
+        function dragOverHandler(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+
+        function dropHandler(event) {
+            event.preventDefault();
+            var files = event.dataTransfer.files;
+            if (files.length > 0) {
+                var file = files[0];
+                if (file.type.match('image.*')) {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        var img = new Image();
+                        img.src = event.target.result;
+                        img.onload = function() {
+                            document.getElementById('drop_zone').innerHTML = '';
+                            document.getElementById('drop_zone').appendChild(img);
+                        };
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please drop an image file.');
+                }
+            }
+        }
+
+        function uploadImage() {
+            var file = document.querySelector('input[type=file]').files[0];
+            var formData = new FormData();
+            formData.append('image', file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = 'Prediction: ' + data.result;
+                document.getElementById('response_text').value = data.result;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
